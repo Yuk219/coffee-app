@@ -1,0 +1,368 @@
+<!-- =========================
+ index.html
+ 抽出専用画面
+========================= -->
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Coffee Brew Assistant</title>
+
+<style>
+
+body{
+  font-family:sans-serif;
+  background:#f5f1ea;
+  margin:0;
+  padding:20px;
+  color:#333;
+}
+
+.container{
+  max-width:600px;
+  margin:auto;
+  background:white;
+  padding:24px;
+  border-radius:16px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+
+h1{
+  margin-top:0;
+}
+
+label{
+  display:block;
+  margin-top:16px;
+  font-weight:bold;
+}
+
+input, select{
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  box-sizing:border-box;
+  font-size:16px;
+}
+
+button{
+  width:100%;
+  margin-top:20px;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:#7a5c3e;
+  color:white;
+  font-size:16px;
+}
+
+.result{
+  margin-top:24px;
+  background:#f0f0f0;
+  padding:16px;
+  border-radius:12px;
+}
+
+.step{
+  margin-top:12px;
+  background:white;
+  padding:12px;
+  border-radius:10px;
+  border-left:5px solid #7a5c3e;
+}
+
+.info{
+  margin-top:10px;
+  padding:12px;
+  background:white;
+  border-radius:10px;
+}
+
+.link{
+  display:block;
+  text-align:center;
+  margin-top:20px;
+  color:#7a5c3e;
+  text-decoration:none;
+  font-weight:bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>☕ Coffee Brew Assistant</h1>
+
+<label>レシピ選択</label>
+<select id="recipeSelect"></select>
+
+<label>コーヒー豆量（g）</label>
+<input type="number" id="coffeeAmount" value="20">
+
+<div id="iceInputArea" style="display:none;">
+
+  <label>完成量（ml）</label>
+  <input type="number" id="targetAmount" value="150">
+
+</div>
+
+<button onclick="calculateRecipe()">
+  レシピ計算
+</button>
+
+<div
+  class="result"
+  id="resultArea"
+  style="display:none;"
+>
+
+  <h2 id="recipeName"></h2>
+
+  <div class="info">
+    <strong>総投入湯量：</strong>
+    <span id="waterTotal"></span> ml
+  </div>
+
+  <div
+    class="info"
+    id="iceInfo"
+    style="display:none;"
+  >
+    <strong>氷量：</strong>
+    <span id="iceTotal"></span> g
+  </div>
+
+  <div class="info">
+    <strong>ブリューレシオ：</strong>
+    <span id="ratioText"></span>
+  </div>
+
+  <div id="stepsArea"></div>
+
+</div>
+
+<a
+  href="manage.html"
+  class="link"
+>
+  ⚙️ レシピ管理
+</a>
+
+</div>
+
+<script>
+
+function loadRecipes(){
+
+  return JSON.parse(
+    localStorage.getItem("coffeeRecipes")
+  ) || {};
+
+}
+
+let recipes = loadRecipes();
+
+if(Object.keys(recipes).length === 0){
+
+  recipes = {
+
+    "ハリオV60": {
+
+      type:"hot",
+
+      ratio:15,
+
+      steps:[
+        {
+          time:"0:00",
+          percent:20,
+          text:"蒸らし"
+        },
+        {
+          time:"0:30",
+          percent:50,
+          text:"2投目"
+        },
+        {
+          time:"1:00",
+          percent:30,
+          text:"3投目"
+        }
+      ]
+
+    }
+
+  };
+
+  localStorage.setItem(
+    "coffeeRecipes",
+    JSON.stringify(recipes)
+  );
+
+}
+
+function refreshRecipeSelect(){
+
+  recipes = loadRecipes();
+
+  const select =
+    document.getElementById("recipeSelect");
+
+  select.innerHTML = "";
+
+  Object.keys(recipes).forEach(recipeName => {
+
+    const option =
+      document.createElement("option");
+
+    option.value = recipeName;
+    option.textContent = recipeName;
+
+    select.appendChild(option);
+
+  });
+
+  updateRecipeType();
+
+}
+
+refreshRecipeSelect();
+
+document
+  .getElementById("recipeSelect")
+  .addEventListener("change", updateRecipeType);
+
+function updateRecipeType(){
+
+  const recipeName =
+    document.getElementById("recipeSelect").value;
+
+  const recipe =
+    recipes[recipeName];
+
+  if(recipe.type === "ice"){
+
+    document.getElementById("iceInputArea")
+      .style.display = "block";
+
+  }else{
+
+    document.getElementById("iceInputArea")
+      .style.display = "none";
+
+  }
+
+}
+
+function calculateRecipe(){
+
+  recipes = loadRecipes();
+
+  const recipeName =
+    document.getElementById("recipeSelect").value;
+
+  const recipe =
+    recipes[recipeName];
+
+  const coffee =
+    parseFloat(
+      document.getElementById("coffeeAmount").value
+    );
+
+  let totalWater = 0;
+  let iceAmount = 0;
+
+  if(recipe.type === "hot"){
+
+    totalWater =
+      Math.round(coffee * recipe.ratio);
+
+    document.getElementById("iceInfo")
+      .style.display = "none";
+
+  }else{
+
+    const targetAmount =
+      parseFloat(
+        document.getElementById("targetAmount").value
+      );
+
+    totalWater =
+      Math.round(
+        targetAmount + (coffee * 2)
+      );
+
+    iceAmount =
+      Math.round(targetAmount * 0.55);
+
+    document.getElementById("iceInfo")
+      .style.display = "block";
+
+    document.getElementById("iceTotal")
+      .textContent = iceAmount;
+
+  }
+
+  document.getElementById("resultArea")
+    .style.display = "block";
+
+  document.getElementById("recipeName")
+    .textContent = recipeName;
+
+  document.getElementById("waterTotal")
+    .textContent = totalWater;
+
+  document.getElementById("ratioText")
+    .textContent = `1:${recipe.ratio}`;
+
+  const stepsArea =
+    document.getElementById("stepsArea");
+
+  stepsArea.innerHTML = "";
+
+  recipe.steps.forEach((step,index) => {
+
+    const amount =
+      Math.round(
+        totalWater * (step.percent / 100)
+      );
+
+    const div =
+      document.createElement("div");
+
+    div.className = "step";
+
+    div.innerHTML = `
+
+      <strong>
+        ${index + 1}投目
+      </strong><br>
+
+      ${step.text}<br>
+
+      時間：${step.time}<br>
+
+      注湯割合：${step.percent}%<br>
+
+      注湯量：${amount} ml
+
+    `;
+
+    stepsArea.appendChild(div);
+
+  });
+
+}
+
+</script>
+
+</body>
+</html>
