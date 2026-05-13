@@ -1,8 +1,3 @@
-<!-- =========================
- manage.html
- レシピ管理画面
-========================= -->
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -21,22 +16,38 @@ body{
   color:#333;
 }
 
-.container{
-  max-width:600px;
-  margin:auto;
+.container{ max-width:700px; margin:auto; }
+
+.card{
   background:white;
   padding:24px;
   border-radius:16px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+  box-shadow:0 4px 12px rgba(0,0,0,0.08);
+  margin-bottom:24px;
+}
+
+h1{ margin-top:0; }
+
+h2{
+  margin-top:0;
+  padding-bottom:12px;
+  border-bottom:2px solid #eee;
+}
+
+label{
+  display:block;
+  margin-top:16px;
+  font-weight:bold;
 }
 
 input, select{
   width:100%;
   padding:12px;
   margin-top:8px;
-  border-radius:8px;
+  border-radius:10px;
   border:1px solid #ccc;
   box-sizing:border-box;
+  font-size:16px;
 }
 
 button{
@@ -50,11 +61,27 @@ button{
   font-size:16px;
 }
 
+.secondaryButton{ background:#777; }
+.dangerButton{ background:#b94a48; }
+
 .step{
-  margin-top:12px;
-  padding:12px;
-  background:#f8f8f8;
-  border-radius:10px;
+  margin-top:16px;
+  padding:16px;
+  background:#fafafa;
+  border:1px solid #ddd;
+  border-radius:12px;
+}
+
+.stepTitle{
+  font-weight:bold;
+  color:#7a5c3e;
+  margin-bottom:12px;
+}
+
+.small{
+  font-size:14px;
+  color:#666;
+  margin-top:8px;
 }
 
 .link{
@@ -62,8 +89,21 @@ button{
   text-align:center;
   margin-top:20px;
   color:#7a5c3e;
-  text-decoration:none;
   font-weight:bold;
+}
+
+.sectionDivider{
+  margin-top:32px;
+  padding-top:24px;
+  border-top:2px dashed #ddd;
+}
+
+.currentRecipe{
+  background:#fff8e8;
+  border:1px solid #e0c98d;
+  padding:16px;
+  border-radius:12px;
+  margin-bottom:24px;
 }
 
 </style>
@@ -71,6 +111,210 @@ button{
 
 <body>
 
+<div class="container">
+
+<h1>⚙️ レシピ管理</h1>
+
+<div class="currentRecipe">
+  <strong>現在編集中：</strong>
+  <span id="currentRecipeName">新規レシピ</span>
+</div>
+
+<div class="card">
+
+<h2>既存レシピを読み込む</h2>
+
+<select id="editRecipeSelect"></select>
+<button onclick="loadRecipeForEdit()">読込</button>
+
+</div>
+
+<div class="card">
+
+<h2>レシピ作成・編集</h2>
+
+<label>レシピ名</label>
+<input type="text" id="recipeName" oninput="updateCurrentRecipeName()">
+
+<label>タイプ</label>
+<select id="recipeType">
+  <option value="hot">ホット</option>
+  <option value="ice">アイス</option>
+</select>
+
+<label>ブリューレシオ</label>
+<input type="number" id="recipeRatio">
+
+<label id="iceRatioLabel" style="display:none;">
+氷割合（完成量％）
+</label>
+
+<input
+  type="number"
+  id="iceRatio"
+  step="1"
+  min="0"
+  max="100"
+  value="55"
+  style="display:none;"
+>
+
+<div class="sectionDivider">
+<h2>ステップ</h2>
+<div id="stepsArea"></div>
+<button class="secondaryButton" onclick="addStepInput()">追加</button>
+</div>
+
+<div class="sectionDivider">
+<button onclick="saveRecipe()">保存</button>
+<button class="dangerButton" onclick="deleteRecipe()">削除</button>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function loadRecipes(){
+  return JSON.parse(localStorage.getItem("coffeeRecipes")) || {};
+}
+
+function saveRecipes(data){
+  localStorage.setItem("coffeeRecipes", JSON.stringify(data));
+}
+
+let recipes = loadRecipes();
+
+function refreshRecipeSelect(){
+  recipes = loadRecipes();
+
+  const select = document.getElementById("editRecipeSelect");
+  select.innerHTML = "";
+
+  Object.keys(recipes).forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    select.appendChild(opt);
+  });
+}
+
+refreshRecipeSelect();
+
+document.getElementById("recipeType")
+  .addEventListener("change", updateIceUI);
+
+function updateIceUI(){
+
+  const type = document.getElementById("recipeType").value;
+
+  const label = document.getElementById("iceRatioLabel");
+  const input = document.getElementById("iceRatio");
+
+  if(type === "ice"){
+    label.style.display = "block";
+    input.style.display = "block";
+  }else{
+    label.style.display = "none";
+    input.style.display = "none";
+  }
+}
+
+function updateCurrentRecipeName(){
+  document.getElementById("currentRecipeName").textContent =
+    document.getElementById("recipeName").value || "新規レシピ";
+}
+
+function addStepInput(stepData = null){
+
+  const area = document.getElementById("stepsArea");
+  const count = area.children.length + 1;
+
+  const div = document.createElement("div");
+  div.className = "step";
+
+  div.innerHTML = `
+    <div class="stepTitle">${count}投目</div>
+    <input type="text" class="stepText" value="${stepData ? stepData.text : ""}">
+    <input type="text" class="stepTime" value="${stepData ? stepData.time : ""}">
+    <input type="number" class="stepPercent" value="${stepData ? stepData.percent : ""}">
+  `;
+
+  area.appendChild(div);
+}
+
+function loadRecipeForEdit(){
+
+  const name = document.getElementById("editRecipeSelect").value;
+  const recipe = recipes[name];
+  if(!recipe) return;
+
+  document.getElementById("recipeName").value = name;
+  document.getElementById("recipeType").value = recipe.type;
+  document.getElementById("recipeRatio").value = recipe.ratio;
+  document.getElementById("iceRatio").value = (recipe.iceRatio ?? 0.55) * 100;
+
+  updateCurrentRecipeName();
+  updateIceUI();
+
+  const area = document.getElementById("stepsArea");
+  area.innerHTML = "";
+
+  recipe.steps.forEach(step => addStepInput(step));
+}
+
+function saveRecipe(){
+
+  const name = document.getElementById("recipeName").value;
+  const type = document.getElementById("recipeType").value;
+  const ratio = parseFloat(document.getElementById("recipeRatio").value);
+
+  const iceRatioRaw = parseFloat(document.getElementById("iceRatio").value);
+  const iceRatio = iceRatioRaw / 100;
+
+  const texts = document.querySelectorAll(".stepText");
+  const times = document.querySelectorAll(".stepTime");
+  const percents = document.querySelectorAll(".stepPercent");
+
+  const steps = [];
+
+  for(let i=0;i<texts.length;i++){
+    steps.push({
+      text:texts[i].value,
+      time:times[i].value,
+      percent:parseFloat(percents[i].value)
+    });
+  }
+
+  recipes[name] = {
+    type,
+    ratio,
+    iceRatio,
+    steps
+  };
+
+  saveRecipes(recipes);
+  refreshRecipeSelect();
+  alert("保存しました");
+}
+
+function deleteRecipe(){
+
+  const name = document.getElementById("recipeName").value;
+  if(!name) return;
+
+  delete recipes[name];
+  saveRecipes(recipes);
+  refreshRecipeSelect();
+
+  document.getElementById("stepsArea").innerHTML = "";
+}
+
+</script>
+
+</body>
+</html>
 <div class="container">
 
 <h1>⚙️ レシピ管理</h1>
