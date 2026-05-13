@@ -1,8 +1,3 @@
-<!-- =========================
- index.html
- 抽出専用画面
-========================= -->
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -30,9 +25,7 @@ body{
   box-shadow:0 4px 12px rgba(0,0,0,0.1);
 }
 
-h1{
-  margin-top:0;
-}
+h1{ margin-top:0; }
 
 label{
   display:block;
@@ -108,21 +101,13 @@ button{
 <input type="number" id="coffeeAmount" value="15">
 
 <div id="iceInputArea" style="display:none;">
-
   <label>完成量（ml）</label>
   <input type="number" id="targetAmount" value="150">
-
 </div>
 
-<button onclick="calculateRecipe()">
-  レシピ計算
-</button>
+<button onclick="calculateRecipe()">レシピ計算</button>
 
-<div
-  class="result"
-  id="resultArea"
-  style="display:none;"
->
+<div class="result" id="resultArea" style="display:none;">
 
   <h2 id="recipeName"></h2>
 
@@ -131,11 +116,7 @@ button{
     <span id="waterTotal"></span> ml
   </div>
 
-  <div
-    class="info"
-    id="iceInfo"
-    style="display:none;"
-  >
+  <div class="info" id="iceInfo" style="display:none;">
     <strong>氷量：</strong>
     <span id="iceTotal"></span> g
   </div>
@@ -149,23 +130,14 @@ button{
 
 </div>
 
-<a
-  href="manage.html"
-  class="link"
->
-  ⚙️ レシピ管理
-</a>
+<a href="manage.html" class="link">⚙️ レシピ管理</a>
 
 </div>
 
 <script>
 
 function loadRecipes(){
-
-  return JSON.parse(
-    localStorage.getItem("coffeeRecipes")
-  ) || {};
-
+  return JSON.parse(localStorage.getItem("coffeeRecipes")) || {};
 }
 
 let recipes = loadRecipes();
@@ -173,191 +145,115 @@ let recipes = loadRecipes();
 if(Object.keys(recipes).length === 0){
 
   recipes = {
-
     "ハリオV60": {
-
       type:"hot",
-
       ratio:15,
-
+      iceRatio:0.55,
       steps:[
-        {
-          time:"0:00",
-          percent:20,
-          text:"蒸らし"
-        },
-        {
-          time:"0:30",
-          percent:50,
-          text:"2投目"
-        },
-        {
-          time:"1:00",
-          percent:30,
-          text:"3投目"
-        }
+        {time:"0:00", percent:20, text:"蒸らし"},
+        {time:"0:30", percent:50, text:"2投目"},
+        {time:"1:00", percent:30, text:"3投目"}
       ]
-
     }
-
   };
 
-  localStorage.setItem(
-    "coffeeRecipes",
-    JSON.stringify(recipes)
-  );
-
+  localStorage.setItem("coffeeRecipes", JSON.stringify(recipes));
 }
 
 function refreshRecipeSelect(){
 
   recipes = loadRecipes();
 
-  const select =
-    document.getElementById("recipeSelect");
-
+  const select = document.getElementById("recipeSelect");
   select.innerHTML = "";
 
-  Object.keys(recipes).forEach(recipeName => {
-
-    const option =
-      document.createElement("option");
-
-    option.value = recipeName;
-    option.textContent = recipeName;
-
+  Object.keys(recipes).forEach(name => {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
     select.appendChild(option);
-
   });
 
   updateRecipeType();
-
 }
 
 refreshRecipeSelect();
 
-document
-  .getElementById("recipeSelect")
+document.getElementById("recipeSelect")
   .addEventListener("change", updateRecipeType);
 
 function updateRecipeType(){
 
-  const recipeName =
-    document.getElementById("recipeSelect").value;
-
-  const recipe =
-    recipes[recipeName];
+  const name = document.getElementById("recipeSelect").value;
+  const recipe = recipes[name];
 
   if(recipe.type === "ice"){
-
-    document.getElementById("iceInputArea")
-      .style.display = "block";
-
+    document.getElementById("iceInputArea").style.display = "block";
   }else{
-
-    document.getElementById("iceInputArea")
-      .style.display = "none";
-
+    document.getElementById("iceInputArea").style.display = "none";
   }
-
 }
 
 function calculateRecipe(){
 
   recipes = loadRecipes();
 
-  const recipeName =
-    document.getElementById("recipeSelect").value;
+  const name = document.getElementById("recipeSelect").value;
+  const recipe = recipes[name];
 
-  const recipe =
-    recipes[recipeName];
-
-  const coffee =
-    parseFloat(
-      document.getElementById("coffeeAmount").value
-    );
+  const coffee = parseFloat(
+    document.getElementById("coffeeAmount").value
+  );
 
   let totalWater = 0;
   let iceAmount = 0;
 
   if(recipe.type === "hot"){
 
-    totalWater =
-      Math.round(coffee * recipe.ratio);
-
-    document.getElementById("iceInfo")
-      .style.display = "none";
+    totalWater = Math.round(coffee * recipe.ratio);
+    document.getElementById("iceInfo").style.display = "none";
 
   }else{
 
-    const targetAmount =
-      parseFloat(
-        document.getElementById("targetAmount").value
-      );
+    const targetAmount = parseFloat(
+      document.getElementById("targetAmount").value
+    );
 
-    totalWater =
-      Math.round(
-        targetAmount + (coffee * 2)
-      );
+    totalWater = Math.round(targetAmount + (coffee * 2));
 
-    iceAmount =
-      Math.round(targetAmount * 0.55);
+    iceAmount = Math.round(
+      targetAmount * (recipe.iceRatio ?? 0.55)
+    );
 
-    document.getElementById("iceInfo")
-      .style.display = "block";
-
-    document.getElementById("iceTotal")
-      .textContent = iceAmount;
-
+    document.getElementById("iceInfo").style.display = "block";
+    document.getElementById("iceTotal").textContent = iceAmount;
   }
 
-  document.getElementById("resultArea")
-    .style.display = "block";
+  document.getElementById("resultArea").style.display = "block";
+  document.getElementById("recipeName").textContent = name;
+  document.getElementById("waterTotal").textContent = totalWater;
+  document.getElementById("ratioText").textContent =
+    `1:${recipe.ratio} / 氷${Math.round((recipe.iceRatio ?? 0.55) * 100)}%`;
 
-  document.getElementById("recipeName")
-    .textContent = recipeName;
-
-  document.getElementById("waterTotal")
-    .textContent = totalWater;
-
-  document.getElementById("ratioText")
-    .textContent = `1:${recipe.ratio}`;
-
-  const stepsArea =
-    document.getElementById("stepsArea");
-
+  const stepsArea = document.getElementById("stepsArea");
   stepsArea.innerHTML = "";
 
-  recipe.steps.forEach((step,index) => {
+  recipe.steps.forEach((step, i) => {
 
-    const amount =
-      Math.round(
-        totalWater * (step.percent / 100)
-      );
+    const amount = Math.round(totalWater * (step.percent / 100));
 
-    const div =
-      document.createElement("div");
-
+    const div = document.createElement("div");
     div.className = "step";
 
     div.innerHTML = `
-
-      <strong>
-        ${index + 1}投目
-      </strong><br>
-
+      <strong>${i + 1}投目</strong><br>
       ${step.text}<br>
-
       時間：${step.time}<br>
-
       注湯割合：${step.percent}%<br>
-
       注湯量：${amount} ml
-
     `;
 
     stepsArea.appendChild(div);
-
   });
 
 }
