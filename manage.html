@@ -418,6 +418,9 @@ function addStepInput(stepData = null){
   const stepCount =
     area.children.length + 1;
 
+  const isFirstStep =
+    stepCount === 1;
+
   const div =
     document.createElement("div");
 
@@ -445,8 +448,15 @@ function addStepInput(stepData = null){
       type="text"
       class="stepTime"
       value="${
-        stepData ? stepData.time : ""
+        isFirstStep
+          ? "0:00"
+          : (stepData ? stepData.time : "")
       }"
+      ${
+        isFirstStep
+          ? "readonly"
+          : ""
+      }
     >
 
     <label>注湯割合（%）</label>
