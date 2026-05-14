@@ -1,3 +1,7 @@
+<!-- =========================
+manage.html
+========================= -->
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -29,14 +33,8 @@ body{
   margin-bottom:24px;
 }
 
-h1{
+h1,h2{
   margin-top:0;
-}
-
-h2{
-  margin-top:0;
-  padding-bottom:12px;
-  border-bottom:2px solid #eee;
 }
 
 label{
@@ -45,7 +43,7 @@ label{
   font-weight:bold;
 }
 
-input, select{
+input, select, textarea{
   width:100%;
   padding:12px;
   margin-top:8px;
@@ -67,16 +65,17 @@ button{
   cursor:pointer;
 }
 
-button:hover{
-  opacity:0.9;
-}
-
 .secondaryButton{
   background:#777;
 }
 
 .dangerButton{
   background:#b94a48;
+}
+
+.removeStepButton{
+  background:#b94a48;
+  margin-top:12px;
 }
 
 .step{
@@ -90,14 +89,6 @@ button:hover{
 .stepTitle{
   font-weight:bold;
   color:#7a5c3e;
-  margin-bottom:12px;
-}
-
-.small{
-  font-size:14px;
-  color:#666;
-  margin-top:8px;
-  line-height:1.6;
 }
 
 .link{
@@ -109,24 +100,6 @@ button:hover{
   font-weight:bold;
 }
 
-.sectionDivider{
-  margin-top:32px;
-  padding-top:24px;
-  border-top:2px dashed #ddd;
-}
-
-.currentRecipe{
-  background:#fff8e8;
-  border:1px solid #e0c98d;
-  padding:16px;
-  border-radius:12px;
-  margin-bottom:24px;
-}
-
-.currentRecipe strong{
-  color:#7a5c3e;
-}
-
 </style>
 </head>
 
@@ -136,25 +109,9 @@ button:hover{
 
 <h1>⚙️ レシピ管理</h1>
 
-<div class="currentRecipe">
-
-  <strong>現在編集中：</strong>
-
-  <span id="currentRecipeName">
-    新規レシピ
-  </span>
-
-</div>
-
-<!-- =========================
-既存レシピ読込
-========================= -->
-
 <div class="card">
 
-<h2>既存レシピを読み込む</h2>
-
-<label>レシピ選択</label>
+<h2>既存レシピ読込</h2>
 
 <select id="editRecipeSelect"></select>
 
@@ -162,27 +119,14 @@ button:hover{
   レシピ読込
 </button>
 
-<div class="small">
-  保存済みレシピを読み込んで編集できます
 </div>
-
-</div>
-
-<!-- =========================
-レシピ作成・編集
-========================= -->
 
 <div class="card">
 
-<h2>レシピ作成・編集</h2>
+<h2>レシピ編集</h2>
 
 <label>レシピ名</label>
-
-<input
-  type="text"
-  id="recipeName"
-  oninput="updateCurrentRecipeName()"
->
+<input type="text" id="recipeName">
 
 <label>抽出タイプ</label>
 
@@ -199,34 +143,28 @@ button:hover{
 </select>
 
 <label>ブリューレシオ</label>
-
-<input
-  type="number"
-  id="recipeRatio"
->
+<input type="number" id="recipeRatio">
 
 <label
   id="iceRatioLabel"
   style="display:none;"
 >
-  氷割合（完成量に対する％）
+  氷割合（%）
 </label>
 
 <input
   type="number"
   id="iceRatio"
-  step="1"
-  min="0"
-  max="100"
   value="55"
   style="display:none;"
 >
 
-<div class="small" id="iceRatioHelp" style="display:none;">
-  例：55 → 完成量の55%を氷にする
-</div>
+<label>レシピメモ</label>
 
-<div class="sectionDivider">
+<textarea
+  id="recipeMemo"
+  rows="5"
+></textarea>
 
 <h2>注湯ステップ</h2>
 
@@ -238,10 +176,6 @@ button:hover{
 >
   注湯ステップ追加
 </button>
-
-</div>
-
-<div class="sectionDivider">
 
 <button onclick="saveRecipe()">
   レシピ保存
@@ -256,12 +190,6 @@ button:hover{
 
 </div>
 
-</div>
-
-<!-- =========================
-バックアップ
-========================= -->
-
 <div class="card">
 
 <h2>バックアップ</h2>
@@ -270,24 +198,15 @@ button:hover{
   レシピを書き出し
 </button>
 
-<div class="small">
-  JSONファイルとして保存します
-</div>
-
 <input
   type="file"
   id="importFile"
   accept=".json"
-  style="margin-top:20px;"
 >
 
 <button onclick="importRecipes()">
   レシピを復元
 </button>
-
-<div class="small">
-  バックアップJSONから復元します
-</div>
 
 </div>
 
@@ -301,10 +220,6 @@ button:hover{
 </div>
 
 <script>
-
-/* =========================
-保存処理
-========================= */
 
 function loadRecipes(){
 
@@ -323,10 +238,6 @@ function saveRecipes(data){
 
 }
 
-/* =========================
-初期化
-========================= */
-
 let recipes = loadRecipes();
 
 function refreshRecipeSelect(){
@@ -338,13 +249,13 @@ function refreshRecipeSelect(){
 
   select.innerHTML = "";
 
-  Object.keys(recipes).forEach(recipeName => {
+  Object.keys(recipes).forEach(name => {
 
     const option =
       document.createElement("option");
 
-    option.value = recipeName;
-    option.textContent = recipeName;
+    option.value = name;
+    option.textContent = name;
 
     select.appendChild(option);
 
@@ -353,10 +264,6 @@ function refreshRecipeSelect(){
 }
 
 refreshRecipeSelect();
-
-/* =========================
-氷割合表示切替
-========================= */
 
 document
   .getElementById("recipeType")
@@ -367,48 +274,18 @@ function updateIceUI(){
   const type =
     document.getElementById("recipeType").value;
 
-  const label =
-    document.getElementById("iceRatioLabel");
+  const show =
+    type === "ice";
 
-  const input =
-    document.getElementById("iceRatio");
+  document.getElementById("iceRatioLabel")
+    .style.display =
+      show ? "block" : "none";
 
-  const help =
-    document.getElementById("iceRatioHelp");
-
-  if(type === "ice"){
-
-    label.style.display = "block";
-    input.style.display = "block";
-    help.style.display = "block";
-
-  }else{
-
-    label.style.display = "none";
-    input.style.display = "none";
-    help.style.display = "none";
-
-  }
+  document.getElementById("iceRatio")
+    .style.display =
+      show ? "block" : "none";
 
 }
-
-/* =========================
-現在編集中表示
-========================= */
-
-function updateCurrentRecipeName(){
-
-  const name =
-    document.getElementById("recipeName").value;
-
-  document.getElementById("currentRecipeName")
-    .textContent = name || "新規レシピ";
-
-}
-
-/* =========================
-ステップ追加
-========================= */
 
 function addStepInput(stepData = null){
 
@@ -431,16 +308,6 @@ function addStepInput(stepData = null){
     <div class="stepTitle">
       ${stepCount}投目
     </div>
-
-    <label>説明</label>
-
-    <input
-      type="text"
-      class="stepText"
-      value="${
-        stepData ? stepData.text : ""
-      }"
-    >
 
     <label>時間</label>
 
@@ -469,15 +336,58 @@ function addStepInput(stepData = null){
       }"
     >
 
+    <button
+      type="button"
+      class="removeStepButton"
+      onclick="removeStep(this)"
+    >
+      このステップを削除
+    </button>
+
   `;
 
   area.appendChild(div);
 
+  refreshStepTitles();
+
 }
 
-/* =========================
-読込
-========================= */
+function removeStep(button){
+
+  button.parentElement.remove();
+
+  refreshStepTitles();
+
+}
+
+function refreshStepTitles(){
+
+  const steps =
+    document.querySelectorAll(".step");
+
+  steps.forEach((step,index) => {
+
+    step.querySelector(".stepTitle")
+      .textContent =
+        `${index + 1}投目`;
+
+    const timeInput =
+      step.querySelector(".stepTime");
+
+    if(index === 0){
+
+      timeInput.value = "0:00";
+      timeInput.readOnly = true;
+
+    }else{
+
+      timeInput.readOnly = false;
+
+    }
+
+  });
+
+}
 
 function loadRecipeForEdit(){
 
@@ -507,7 +417,9 @@ function loadRecipeForEdit(){
       (recipe.iceRatio ?? 0.55) * 100
     );
 
-  updateCurrentRecipeName();
+  document.getElementById("recipeMemo").value =
+    recipe.memo || "";
+
   updateIceUI();
 
   const area =
@@ -523,13 +435,10 @@ function loadRecipeForEdit(){
 
 }
 
-/* =========================
-保存
-========================= */
-
 function saveRecipe(){
 
-  let latestRecipes = loadRecipes();
+  let latestRecipes =
+    loadRecipes();
 
   const recipeName =
     document.getElementById("recipeName").value;
@@ -542,25 +451,13 @@ function saveRecipe(){
       document.getElementById("recipeRatio").value
     );
 
-  const iceRatioRaw =
+  const iceRatio =
     parseFloat(
       document.getElementById("iceRatio").value
-    );
+    ) / 100;
 
-  const iceRatio =
-    isNaN(iceRatioRaw)
-      ? 0.55
-      : iceRatioRaw / 100;
-
-  if(!recipeName || !recipeRatio){
-
-    alert("レシピ名とブリューレシオを入力してください");
-    return;
-
-  }
-
-  const texts =
-    document.querySelectorAll(".stepText");
+  const recipeMemo =
+    document.getElementById("recipeMemo").value;
 
   const times =
     document.querySelectorAll(".stepTime");
@@ -570,11 +467,9 @@ function saveRecipe(){
 
   const steps = [];
 
-  for(let i=0; i<texts.length; i++){
+  for(let i=0; i<times.length; i++){
 
     steps.push({
-
-      text:texts[i].value,
 
       time:times[i].value,
 
@@ -594,6 +489,8 @@ function saveRecipe(){
 
     iceRatio:iceRatio,
 
+    memo:recipeMemo,
+
     steps:steps
 
   };
@@ -606,10 +503,6 @@ function saveRecipe(){
 
 }
 
-/* =========================
-削除
-========================= */
-
 function deleteRecipe(){
 
   const recipeName =
@@ -619,15 +512,8 @@ function deleteRecipe(){
     return;
   }
 
-  const confirmDelete = confirm(
-    `「${recipeName}」を削除しますか？`
-  );
-
-  if(!confirmDelete){
-    return;
-  }
-
-  let latestRecipes = loadRecipes();
+  let latestRecipes =
+    loadRecipes();
 
   delete latestRecipes[recipeName];
 
@@ -635,33 +521,18 @@ function deleteRecipe(){
 
   refreshRecipeSelect();
 
-  document.getElementById("recipeName").value = "";
-  document.getElementById("recipeRatio").value = "";
-  document.getElementById("iceRatio").value = "55";
-  document.getElementById("stepsArea").innerHTML = "";
-
-  updateCurrentRecipeName();
-  updateIceUI();
-
   alert("削除しました");
 
 }
-
-/* =========================
-JSON書き出し
-========================= */
 
 function exportRecipes(){
 
   const recipes =
     loadRecipes();
 
-  const dataStr =
-    JSON.stringify(recipes, null, 2);
-
   const blob =
     new Blob(
-      [dataStr],
+      [JSON.stringify(recipes, null, 2)],
       {type:"application/json"}
     );
 
@@ -671,15 +542,10 @@ function exportRecipes(){
   const a =
     document.createElement("a");
 
-  const date =
-    new Date()
-      .toISOString()
-      .slice(0,10);
-
   a.href = url;
 
   a.download =
-    `coffee_recipes_${date}.json`;
+    "coffee_recipes.json";
 
   a.click();
 
@@ -687,23 +553,14 @@ function exportRecipes(){
 
 }
 
-/* =========================
-JSON復元
-========================= */
-
 function importRecipes(){
 
-  const fileInput =
-    document.getElementById("importFile");
-
   const file =
-    fileInput.files[0];
+    document.getElementById("importFile")
+    .files[0];
 
   if(!file){
-
-    alert("JSONファイルを選択してください");
     return;
-
   }
 
   const reader =
@@ -713,20 +570,18 @@ function importRecipes(){
 
     try{
 
-      const importedRecipes =
+      const data =
         JSON.parse(event.target.result);
 
-      saveRecipes(importedRecipes);
-
-      recipes = loadRecipes();
+      saveRecipes(data);
 
       refreshRecipeSelect();
 
-      alert("レシピを復元しました");
+      alert("復元しました");
 
     }catch(error){
 
-      alert("JSON読み込みに失敗しました");
+      alert("JSON読み込み失敗");
 
     }
 
@@ -735,10 +590,6 @@ function importRecipes(){
   reader.readAsText(file);
 
 }
-
-/* =========================
-初期表示
-========================= */
 
 updateIceUI();
 
