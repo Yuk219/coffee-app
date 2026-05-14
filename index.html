@@ -1,3 +1,7 @@
+<!-- =========================
+index.html
+========================= -->
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -55,10 +59,6 @@ button{
   color:white;
   font-size:16px;
   cursor:pointer;
-}
-
-button:hover{
-  opacity:0.9;
 }
 
 .result{
@@ -163,6 +163,19 @@ button:hover{
     <span id="ratioText"></span>
   </div>
 
+  <div
+    class="info"
+    id="memoArea"
+    style="display:none;"
+  >
+    <strong>レシピメモ：</strong>
+
+    <div
+      id="memoText"
+      style="margin-top:8px;"
+    ></div>
+  </div>
+
   <div id="stepsArea"></div>
 
 </div>
@@ -178,10 +191,6 @@ button:hover{
 
 <script>
 
-/* =========================
-レシピ読込
-========================= */
-
 function loadRecipes(){
 
   return JSON.parse(
@@ -191,10 +200,6 @@ function loadRecipes(){
 }
 
 let recipes = loadRecipes();
-
-/* =========================
-初期レシピ
-========================= */
 
 if(Object.keys(recipes).length === 0){
 
@@ -208,26 +213,21 @@ if(Object.keys(recipes).length === 0){
 
       iceRatio:0.55,
 
-      steps:[
+      memo:"バランス重視",
 
+      steps:[
         {
           time:"0:00",
-          percent:20,
-          text:"蒸らし"
+          percent:20
         },
-
         {
           time:"0:30",
-          percent:50,
-          text:"2投目"
+          percent:50
         },
-
         {
           time:"1:00",
-          percent:30,
-          text:"3投目"
+          percent:30
         }
-
       ]
 
     }
@@ -240,10 +240,6 @@ if(Object.keys(recipes).length === 0){
   );
 
 }
-
-/* =========================
-レシピ一覧更新
-========================= */
 
 function refreshRecipeSelect(){
 
@@ -272,10 +268,6 @@ function refreshRecipeSelect(){
 
 refreshRecipeSelect();
 
-/* =========================
-レシピタイプ変更
-========================= */
-
 document
   .getElementById("recipeSelect")
   .addEventListener("change", updateRecipeType);
@@ -302,10 +294,6 @@ function updateRecipeType(){
 
 }
 
-/* =========================
-レシピ計算
-========================= */
-
 function calculateRecipe(){
 
   recipes = loadRecipes();
@@ -324,10 +312,6 @@ function calculateRecipe(){
   let totalWater = 0;
   let iceAmount = 0;
 
-  /* =========================
-  ホット
-  ========================= */
-
   if(recipe.type === "hot"){
 
     totalWater =
@@ -336,13 +320,7 @@ function calculateRecipe(){
     document.getElementById("iceInfo")
       .style.display = "none";
 
-  }
-
-  /* =========================
-  アイス
-  ========================= */
-
-  else{
+  }else{
 
     const targetAmount =
       parseFloat(
@@ -368,10 +346,6 @@ function calculateRecipe(){
 
   }
 
-  /* =========================
-  基本情報表示
-  ========================= */
-
   document.getElementById("resultArea")
     .style.display = "block";
 
@@ -385,9 +359,20 @@ function calculateRecipe(){
     .textContent =
       `1:${recipe.ratio}`;
 
-  /* =========================
-  ステップ表示
-  ========================= */
+  if(recipe.memo){
+
+    document.getElementById("memoArea")
+      .style.display = "block";
+
+    document.getElementById("memoText")
+      .textContent = recipe.memo;
+
+  }else{
+
+    document.getElementById("memoArea")
+      .style.display = "none";
+
+  }
 
   const stepsArea =
     document.getElementById("stepsArea");
@@ -418,10 +403,6 @@ function calculateRecipe(){
       </strong>
 
       <br><br>
-
-      ${step.text}
-
-      <br>
 
       時間：${step.time}
 
